@@ -5,6 +5,12 @@ public class RBTree {
     public Node root;
 
 
+    /**
+     * 新增节点
+     *
+     * @param newNode
+     * @return
+     */
     public Node insert(Node newNode) {
         if (newNode == null) {
             return root;
@@ -45,8 +51,13 @@ public class RBTree {
         return root;
     }
 
-    public void fixInsert(Node newNode) {
-        //1.如果新节点为根节点
+    /**
+     * 新增节点后维护平衡
+     *
+     * @param newNode
+     */
+    private void fixInsert(Node newNode) {
+        //1.如果新节点为根节点，将根节点设置为黑色
         if (newNode == root) {
             root.isBlack = true;
             return;
@@ -143,9 +154,173 @@ public class RBTree {
 
 
     /**
+     * 删除节点
+     *
+     * @param val
+     */
+    public void remove(int val) {
+
+        //根据值获取指定节点
+        Node removeNode = select(val);
+
+        //1.如果待删除的节点有两个子节点
+        if (removeNode.left != null && removeNode.right != null) {
+            //获取后继节点
+            Node successorNode = getSuccessorNode(removeNode);
+
+            removeNode.val = successorNode.val;
+
+            fixRemove(successorNode);
+
+        } else {
+            fixRemove(removeNode);
+        }
+
+    }
+
+
+    /**
+     * 删除节点后维护平衡
+     *
+     * @param removeNode
+     */
+    private void fixRemove(Node removeNode) {
+        Node parent = removeNode.parent;
+        if (parent == null) {
+            //0.如果待删除节点的父节点为空，说明该节点是根节点
+            if (removeNode.left != null) {
+                // 这里的右节点一定为空，所以只需要判断左节点即可
+                root = removeNode.left;
+            } else {
+                root = null;
+            }
+
+            return;
+        }
+
+
+        // 1.如果待删除的节点是红色节点
+        if (!removeNode.isBlack) {
+            if (removeNode.left == null && removeNode.right == null) {
+                //1.1如果待删除的后继节点没有子节点，直接删除即可
+
+                if (removeNode == parent.left) {
+                    parent.left = null;
+                } else {
+                    parent.right = null;
+                }
+
+            } else if (removeNode.left != null && removeNode.right != null) {
+                //1.2 如果待删除节点左子树不为空，右子树为空
+                if (removeNode == parent.left) {
+                    parent.left = removeNode.left;
+                } else {
+                    parent.right = removeNode.left;
+                }
+
+            } else if (removeNode.left != null && removeNode.right != null) {
+                //1.3 如果待删除节点左子树为空，右子树不为空
+                if (removeNode == parent.left) {
+                    parent.left = removeNode.right;
+                } else {
+                    parent.right = removeNode.right;
+                }
+            }
+
+        } else {
+            // 2.如果待删除的节点是黑色节点
+
+            if (removeNode == parent.left) {
+                // 2.1如果待删除节点是父节点的左节点
+
+                if (parent.right != null) {
+                    if (!parent.right.isBlack) {
+                        //2.1.1 待删除节点的兄弟节点是红色节点
+                        /**
+                         * 将兄弟节点设置为黑色
+                         * 将父节点设置为红色
+                         * 对兄弟节点进行一次左旋操作
+                         * 进行2.1.2.3步骤的操作
+                         */
+                        parent.right.isBlack = true;
+                        parent.isBlack = false;
+                        leftRotate(parent.right);
+                        //进行2.1.2.3步骤的操作
+                    } else {
+
+                        //2.1.2 待删除节点的兄弟节点是黑色节点
+
+                        if (parent.right.right != null && !parent.right.right.isBlack) {
+                            //2.1.2.1 待删除节点的兄弟节点的右子节点为红色节点
+                            /**
+                             * 将兄弟节点的颜色设置为父节点的颜色
+                             * 将父节点的颜色设置为黑色
+                             * 将兄弟节点的右子节点颜色设置为黑色
+                             * 对兄弟节点进行左旋
+                             */
+                            parent.right.isBlack = parent.isBlack;
+                            parent.isBlack = true;
+                            parent.right.right.isBlack = true;
+                            leftRotate(parent.right);
+                        } else if (parent.right.left != null && parent.right.right != null
+                                && parent.right.left.isBlack == false && parent.right.right.isBlack == true) {
+                            //2.1.2.2 待删除节点的兄弟节点的左子节点为红色，右子节点为黑色节点
+                            /**
+                             * 将兄弟节点的左子节点设置为黑色、
+                             * 将兄弟节点设置为红色
+                             * 对兄弟节点的左子节点尽心过一次右旋操作，得到情况2.1.2.1
+                             * 按照情景2.1.2.1处理
+                             */
+                            parent.right.left.isBlack = true;
+                            parent.right.isBlack = false;
+                            rightRotate(parent.right.left);
+                        }else{
+                            //2.1.2.3 待删除节点的兄弟节点的左子节点为黑色，右子节点为黑色
+                            //这里也可以考虑为兄弟节点及其左右子节点均不存在
+                            /**
+                             * 将兄弟节点设置为红色
+                             */
+                        }
+
+
+                    }
+
+                }
+
+            }
+
+
+        }
+
+
+        //2.如果
+    }
+
+    /**
+     * 获取后继节点
+     *
+     * @param node
+     * @return
+     */
+    private Node getSuccessorNode(Node node) {
+
+        if (node != null && node.right != null) {
+            node = node.right;
+            while (node.left != null) {
+                node = node.left;
+            }
+            return node;
+        }
+
+
+        return null;
+    }
+
+
+    /**
      * 左旋
      */
-    public Node leftRotate(Node node) {
+    private Node leftRotate(Node node) {
 
         Node parent = node.parent;
         Node pParent = parent.parent;
@@ -171,7 +346,7 @@ public class RBTree {
     /**
      * 右旋
      */
-    public Node rightRotate(Node node) {
+    private Node rightRotate(Node node) {
         Node parent = node.parent;
         Node pParent = parent.parent;
 
@@ -193,5 +368,21 @@ public class RBTree {
         return node;
     }
 
+
+    public Node select(int val) {
+
+        Node node = root;
+        while (node != null) {
+            if (node.val > val) {
+                node = node.left;
+            } else if (node.val == val) {
+                return node;
+            } else {
+                node = node.right;
+            }
+        }
+
+        return null;
+    }
 
 }
